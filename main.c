@@ -12,9 +12,10 @@ int main(void) {
     usart_init(9600);
     // stdout = &usart_stdout;
 
-    usart_sprint("NUM : ", 4, BIN);
+    usart_sprint("NUM: ?\n", 15, HEX);
+    // usart_sprint("NUM : ", 58, HEX);
     // usart_print_ch('s');
-    // usart_print_int(22);
+    // usart_print_bin(22);
     // usart_print_str("sss\n");
 
     while (1) {

@@ -1,8 +1,6 @@
 #include "stdfunc.h"
 
 // ============================================= USART INIT =============================================
-// int usart_putch(char ch, FILE* stream);
-// FILE usart_stdout = FDEV_SETUP_STREAM(usart_putch, NULL, _FDEV_SETUP_WRITE);
 
 void usart_init(uint16_t baud) {
     uint16_t uart_speed = F_CPU / (16UL * baud) - 1;
@@ -20,15 +18,7 @@ void usart_init(uint16_t baud) {
 // #endif
 }
 
-// int usart_putch(char ch, FILE* stream) {
-//     // if (ch == '\n') {
-//     //     while (!(UCSR0A & (1 << UDRE0)));
-//     //     UDR0 = '\r';
-//     // }
-//     while (!(UCSR0A & (1 << UDRE0)));
-//     UDR0 =  ch;
-//     return 0;
-// }
+// ============================================= USART PRINT =============================================
 
 void usart_print_ch(char ch) {
     if (ch == '\n') {
@@ -48,7 +38,7 @@ void usart_print_str(const char* str) {
 
 void usart_print_dec(int16_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t max_dcount = 10000;
+    uint16_t r_num = 0;
 
     if (num < 0) {
         usart_print_ch('-');
@@ -59,73 +49,82 @@ void usart_print_dec(int16_t num) {
     }
 
     while (num) {
-        if (num / max_dcount == 0) {
-            max_dcount /=10;
-            continue;
-        }
+        r_num *= 10;
+        r_num += num % 10;
+        num /= 10;
+    }
 
+    while (r_num) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(num / max_dcount)];
-        num %= max_dcount;
+        UDR0 = nums_arr[(r_num % 10)];
+        r_num /= 10;
     }
 }
 
-void usart_print_bin(int16_t num) {
+void usart_print_bin(uint8_t num) {
     const char nums_arr[] = "01";
+    uint8_t r_num[8] = {0,0,0,0,0,0,0,0};
 
-    if (num > 0) {
-        usart_print_str("0b");
-    } else if (num < 0) {
-        usart_print_str("1b");
-        num = ~num + 1;
-    } else if (num == 0) {
-        usart_print_ch('0');
+    usart_print_str("0b");
+    if (num == 0) {
+        usart_print_str("0b00000000");
         return;
     }
 
-    while (num) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(num % 2)];
+    for (uint8_t i = 0; i < 8; i++) {
+        r_num[i] = num % 2;
         num /= 2;
+    }
+
+    for (uint8_t i = 8; i > 0; i--) {
+        while (!(UCSR0A & (1 << UDRE0)));
+        UDR0 = nums_arr[r_num[i - 1]];
+    }
+}
+
+void usart_print_hex(uint8_t num) {
+    const char nums_arr[] = "0123456789ABCDEF";
+    uint8_t r_num[2] = {0,0};
+
+    usart_print_str("0x");
+    if (num == 0) {
+        usart_print_str("0x00");
+        return;
+    }
+
+    for (uint8_t i = 0; i < 2; i++) {
+        r_num[i] = num % 16;
+        num /= 16;
+    }
+
+    for (uint8_t i = 2; i > 0; i--) {
+        while (!(UCSR0A & (1 << UDRE0)));
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 
 void usart_sprint(const char* str, int16_t num, uint8_t mode) {
     switch (mode) {
-    case DEC: usart_print_str(str); usart_print_dec(num); break;
-    case BIN: usart_print_str(str); usart_print_bin(num); break;
-    case HEX: break;
+    case DEC: 
+        while (*str) {
+            if (*str == '?') usart_print_dec(num);
+            else usart_print_ch(*str);
+            str++;
+        } break;
+    case BIN: 
+        while (*str) {
+            if (*str == '?') usart_print_bin(num);
+            else usart_print_ch(*str);
+            str++;
+        } break;
+    case HEX: 
+        while (*str) {
+            if (*str == '?') usart_print_hex(num);
+            else usart_print_ch(*str);
+            str++;
+        } break;
     }
 }
-
-// void usart_print(const char* str, ...) {
-//     // uint16_t scount = 0;
-//     va_list args;
-//     va_start(args, str);
-
-//     while (*str) {
-
-//         if (*str == '%') {
-//             // scount++;
-//             // if (*(str + 1) == ) {
-                
-//             // }
-
-//             switch (*str++) {
-//             case 'c': usart_print_ch(va_arg(args, int16_t)); break;
-//             case 's': usart_print_str(va_arg(args, const char*)); break;
-//             case 'd': usart_print_int(va_arg(args, int16_t)); break;
-//             // case 'b': break;
-//             // case 'x': break;
-//             case '%': usart_print_ch('%'); break;
-//             default: continue;
-//             }
-//         }
-//         usart_print_ch(*str);
-//         str++;
-//     }
-//     va_end(args);
-// };
 
 // ============================================= ANALOG_READ =============================================
 
