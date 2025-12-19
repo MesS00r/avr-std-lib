@@ -10,12 +10,12 @@ void usart_init(uint16_t baud) {
     UCSR0B = (1 << TXEN0) | (1 << RXEN0);
     UCSR0C = (1 << UCSZ00) | (1 << UCSZ01);
 
-// #ifndef DEBUG_MODE
-//     printf("USART speed: %d\n", uart_speed);
-//     printf("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2));
-//     printf("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2));
-//     printf("Char size: %X\n", UCSR0C);
-// #endif
+#if DEBUG_MODE
+    UPRINT("USART speed: %d\n", uart_speed, DEC);
+    UPRINT("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2), DEC);
+    UPRINT("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2), DEC);
+    UPRINT("UCSR: %d\n", UCSR0C, BIN);
+#endif
 }
 
 // ============================================= USART PRINT =============================================
@@ -103,24 +103,31 @@ void usart_print_hex(uint8_t num) {
     }
 }
 
-void usart_sprint(const char* str, int16_t num, uint8_t mode) {
+void usart_print(const char* str, int16_t num, uint8_t mode) {
+    uint8_t is_print = 0;
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '?') usart_print_dec(num);
-            else usart_print_ch(*str);
+            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+                is_print = 1; usart_print_dec(num);
+                str += 2; continue;
+            } else usart_print_ch(*str);
             str++;
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '?') usart_print_bin(num);
-            else usart_print_ch(*str);
+            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+                is_print = 1; usart_print_bin(num);
+                str += 2; continue;
+            } else usart_print_ch(*str);
             str++;
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '?') usart_print_hex(num);
-            else usart_print_ch(*str);
+            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+                is_print = 1; usart_print_hex(num);
+                str += 2; continue;
+            } else usart_print_ch(*str);
             str++;
         } break;
     }

@@ -1,7 +1,7 @@
 #ifndef STDFUNC_H_INCLUDED
 #define STDFUNC_H_INCLUDED
 
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 #define A0 0
 #define A1 1
@@ -27,6 +27,12 @@ uint16_t adc_read(uint8_t a_pin);
 void tccr1_init(uint8_t port);
 void tccr1_servo_angle(uint8_t angle);
 
-void usart_sprint(const char* str, int16_t num, uint8_t mode);
+void usart_print(const char* str, int16_t num, uint8_t mode);
+void usart_print_str(const char* str);
+
+#define GET_MACRO(_1, _2, _3, NAME, ...) NAME
+#define PRINT1A(x) _Generic((x), char*: usart_print_str)(x)
+#define PRINT3A(x, y, z) _Generic((x), char*: usart_print)(x, y, z)
+#define UPRINT(...) GET_MACRO(__VA_ARGS__, PRINT3A, , PRINT1A) (__VA_ARGS__)
 
 #endif //STDFUNC_H_INCLUDED
