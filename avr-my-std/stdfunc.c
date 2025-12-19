@@ -41,19 +41,22 @@ void usart_print_ch(char ch) {
 
 void usart_print_str(const char* str) {
     while (*str) {
-        if (*str == '\n') {
-            while (!(UCSR0A & (1 << UDRE0)));
-            UDR0 = '\r';
-        }
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 =  *str;
+        usart_print_ch(*str);
         str++;
     }
 }
 
-void usart_print_int(uint8_t num) {
+void usart_print_dec(int16_t num) {
     const char nums_arr[] = "0123456789";
-    uint8_t max_dcount = 100;
+    uint16_t max_dcount = 10000;
+
+    if (num < 0) {
+        usart_print_ch('-');
+        num = ~num + 1;
+    } else if (num == 0) {
+        usart_print_ch('0');
+        return;
+    }
 
     while (num) {
         if (num / max_dcount == 0) {
@@ -67,40 +70,62 @@ void usart_print_int(uint8_t num) {
     }
 }
 
-void usart_print(const char* str, uint8_t count, ...) {
-    uint16_t scount = 0;
-    uint16_t ccount = 0;
-    va_list args;
-    va_start(args, count);
+void usart_print_bin(int16_t num) {
+    const char nums_arr[] = "01";
 
-    while (*str) {
-        ccount++;
-        if (ccount == count) {
-            va_end(args);
-            va_start(args, count);
-        }
-
-        if (*str == '%') {
-            scount++;
-            if (scount > count) {
-                usart_print_ch('\0'); str += 2;
-                continue;
-            }
-
-            switch (*(str + 1)) {
-            case 'c': usart_print_ch(); break;
-            case 's': usart_print_str(); break;
-            case 'd': usart_print_int(); break;
-            // case 'b': break;
-            // case 'x': break;
-            }
-            str += 2;
-        }
-        usart_print_ch(*str);
-        str++;
+    if (num > 0) {
+        usart_print_str("0b");
+    } else if (num < 0) {
+        usart_print_str("1b");
+        num = ~num + 1;
+    } else if (num == 0) {
+        usart_print_ch('0');
+        return;
     }
-    va_end(args);
-};
+
+    while (num) {
+        while (!(UCSR0A & (1 << UDRE0)));
+        UDR0 = nums_arr[(num % 2)];
+        num /= 2;
+    }
+}
+
+void usart_sprint(const char* str, int16_t num, uint8_t mode) {
+    switch (mode) {
+    case DEC: usart_print_str(str); usart_print_dec(num); break;
+    case BIN: usart_print_str(str); usart_print_bin(num); break;
+    case HEX: break;
+    }
+}
+
+// void usart_print(const char* str, ...) {
+//     // uint16_t scount = 0;
+//     va_list args;
+//     va_start(args, str);
+
+//     while (*str) {
+
+//         if (*str == '%') {
+//             // scount++;
+//             // if (*(str + 1) == ) {
+                
+//             // }
+
+//             switch (*str++) {
+//             case 'c': usart_print_ch(va_arg(args, int16_t)); break;
+//             case 's': usart_print_str(va_arg(args, const char*)); break;
+//             case 'd': usart_print_int(va_arg(args, int16_t)); break;
+//             // case 'b': break;
+//             // case 'x': break;
+//             case '%': usart_print_ch('%'); break;
+//             default: continue;
+//             }
+//         }
+//         usart_print_ch(*str);
+//         str++;
+//     }
+//     va_end(args);
+// };
 
 // ============================================= ANALOG_READ =============================================
 

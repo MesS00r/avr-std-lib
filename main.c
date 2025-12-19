@@ -12,7 +12,7 @@ int main(void) {
     usart_init(9600);
     // stdout = &usart_stdout;
 
-    usart_print("sss: %d : %c : %s : %d\n", 1, 25, 'e', "str");
+    usart_sprint("NUM : ", 4, BIN);
     // usart_print_ch('s');
     // usart_print_int(22);
     // usart_print_str("sss\n");

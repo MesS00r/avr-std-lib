@@ -15,21 +15,24 @@
 #define OC1A 1
 #define OC1B 2
 
+#define DEC 0
+#define BIN 1
+#define HEX 2
+
 #include <avr/io.h>
 #include <util/delay.h>
 // #include <stdio.h>
-#include <stdarg.h>
+// #include <stdarg.h>
 
 void usart_init(uint16_t baud);
-void usart_print(const char* str, uint8_t count, ...);
+// void usart_print(const char* str, ...);
 uint16_t adc_read(uint8_t a_pin);
 void tccr1_init(uint8_t port);
 void tccr1_servo_angle(uint8_t angle);
 
-
-
+void usart_sprint(const char* str, int16_t num, uint8_t mode);
 void usart_print_ch(char ch);
 void usart_print_str(const char* str);
-void usart_print_int(uint8_t num);
+void usart_print_dec(int16_t num);
 
 #endif //STDFUNC_H_INCLUDED
