@@ -10,12 +10,12 @@ void usart_init(uint16_t baud) {
     UCSR0B = (1 << TXEN0) | (1 << RXEN0);
     UCSR0C = (1 << UCSZ00) | (1 << UCSZ01);
 
-#if DEBUG_MODE
-    UPRINT("USART speed: %d\n", uart_speed, DEC);
-    UPRINT("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2), DEC);
-    UPRINT("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2), DEC);
-    UPRINT("UCSR: %d\n", UCSR0C, BIN);
-#endif
+// #if DEBUG_MODE
+//     UPRINT("USART speed: %d\n", uart_speed, DEC);
+//     UPRINT("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2), DEC);
+//     UPRINT("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2), DEC);
+//     UPRINT("UCSR: %d\n", UCSR0C, BIN);
+// #endif
 }
 
 // ============================================= USART PRINT =============================================

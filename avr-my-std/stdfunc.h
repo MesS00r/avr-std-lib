@@ -1,7 +1,7 @@
 #ifndef STDFUNC_H_INCLUDED
 #define STDFUNC_H_INCLUDED
 
-#define DEBUG_MODE 0
+//#define DEBUG_MODE 0
 
 #define A0 0
 #define A1 1
