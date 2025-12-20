@@ -133,7 +133,44 @@ void usart_print(const char* str, int16_t num, uint8_t mode) {
     }
 }
 
-// ============================================= ANALOG_READ =============================================
+// ============================================= TWI ===========================================
+
+void twi_init(uint8_t scl) {
+    TWSR = 0;
+    DDRC |= (1 << A5) | (1 << A4);
+    switch (scl) {
+    case TWI_100K: TWBR = TWI_100K; break;
+    case TWI_250K: TWBR = TWI_250K; break;
+    case TWI_400K: TWBR = TWI_400K; break;
+    }
+}
+
+void twi_start(void) {
+    TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
+    while(!(TWCR & (1 << TWINT)));
+}
+
+void twi_write(uint8_t data) {
+    TWDR = data;
+    TWCR = (1 << TWINT) | (1 << TWEN);
+    while(!(TWCR & (1 << TWINT)));
+}
+
+uint8_t twi_read(uint8_t ack) {
+    if (ack) {
+        TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
+    } else {
+        TWCR = (1 << TWINT) | (1 << TWEN);
+    }
+    while(!(TWCR & (1 << TWINT)));
+    return TWDR;
+}
+
+void twi_stop(void) {
+    TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+}
+
+// ============================================= ANALOG READ =============================================
 
 uint16_t adc_read(uint8_t a_pin) {
     a_pin &= 0x7;
