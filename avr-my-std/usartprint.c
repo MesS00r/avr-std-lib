@@ -40,7 +40,7 @@ void usart_print_str(const char* str) {
 
 void usart_print_dec_8(int8_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t r_num = 0;
+    uint8_t num_len = 0;
 
     if (num < 0) {
         usart_print_ch('-');
@@ -50,16 +50,21 @@ void usart_print_dec_8(int8_t num) {
         return;
     }
 
-    while (num) {
-        r_num *= 10;
-        r_num += num % 10;
+    uint8_t num_copy = num;
+    while (num_copy) {
+        num_len++; num_copy /= 10;
+    }
+    uint8_t r_num[num_len];
+    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
+
+    for (uint8_t i = 0; i < num_len; i++) {
+        r_num[i] = num % 10;
         num /= 10;
     }
 
-    while (r_num) {
+    for (uint8_t i = num_len; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(r_num % 10)];
-        r_num /= 10;
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 
@@ -139,7 +144,7 @@ void usart_print_8(const char* str, int8_t num, uint8_t mode) {
 
 void usart_print_dec_16(int16_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t r_num = 0;
+    uint8_t num_len = 0;
 
     if (num < 0) {
         usart_print_ch('-');
@@ -149,16 +154,21 @@ void usart_print_dec_16(int16_t num) {
         return;
     }
 
-    while (num) {
-        r_num *= 10;
-        r_num += num % 10;
+    uint16_t num_copy = num;
+    while (num_copy) {
+        num_len++; num_copy /= 10;
+    }
+    uint8_t r_num[num_len];
+    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
+
+    for (uint8_t i = 0; i < num_len; i++) {
+        r_num[i] = num % 10;
         num /= 10;
     }
 
-    while (r_num) {
+    for (uint8_t i = num_len; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(r_num % 10)];
-        r_num /= 10;
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 
@@ -243,7 +253,7 @@ void usart_print_16(const char* str, int16_t num, uint8_t mode) {
 
 void usart_print_dec_32(int32_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t r_num = 0;
+    uint8_t num_len = 0;
 
     if (num < 0) {
         usart_print_ch('-');
@@ -253,16 +263,21 @@ void usart_print_dec_32(int32_t num) {
         return;
     }
 
-    while (num) {
-        r_num *= 10;
-        r_num += num % 10;
+    uint32_t num_copy = num;
+    while (num_copy) {
+        num_len++; num_copy /= 10;
+    }
+    uint8_t r_num[num_len];
+    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
+
+    for (uint8_t i = 0; i < num_len; i++) {
+        r_num[i] = num % 10;
         num /= 10;
     }
 
-    while (r_num) {
+    for (uint8_t i = num_len; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(r_num % 10)];
-        r_num /= 10;
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 
@@ -347,7 +362,7 @@ void usart_print_32(const char* str, int32_t num, uint8_t mode) {
 
 void usart_print_dec_8u(uint8_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t r_num = 0;
+    uint8_t num_len = 0;
 
     if (num < 0) {
         usart_print_ch('-');
@@ -357,22 +372,27 @@ void usart_print_dec_8u(uint8_t num) {
         return;
     }
 
-    while (num) {
-        r_num *= 10;
-        r_num += num % 10;
+    uint8_t num_copy = num;
+    while (num_copy) {
+        num_len++; num_copy /= 10;
+    }
+    uint8_t r_num[num_len];
+    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
+
+    for (uint8_t i = 0; i < num_len; i++) {
+        r_num[i] = num % 10;
         num /= 10;
     }
 
-    while (r_num) {
+    for (uint8_t i = num_len; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(r_num % 10)];
-        r_num /= 10;
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 
 void usart_print_dec_16u(uint16_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t r_num = 0;
+    uint8_t num_len = 0;
 
     if (num < 0) {
         usart_print_ch('-');
@@ -382,41 +402,48 @@ void usart_print_dec_16u(uint16_t num) {
         return;
     }
 
-    while (num) {
-        r_num *= 10;
-        r_num += num % 10;
+    uint16_t num_copy = num;
+    while (num_copy) {
+        num_len++; num_copy /= 10;
+    }
+    uint8_t r_num[num_len];
+    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
+
+    for (uint8_t i = 0; i < num_len; i++) {
+        r_num[i] = num % 10;
         num /= 10;
     }
 
-    while (r_num) {
+    for (uint8_t i = num_len; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(r_num % 10)];
-        r_num /= 10;
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 
 void usart_print_dec_32u(uint32_t num) {
     const char nums_arr[] = "0123456789";
-    uint16_t r_num = 0;
+    uint8_t num_len = 0;
 
-    if (num < 0) {
-        usart_print_ch('-');
-        num = ~num + 1;
-    } else if (num == 0) {
+    if (num == 0) {
         usart_print_ch('0');
         return;
     }
 
-    while (num) {
-        r_num *= 10;
-        r_num += num % 10;
+    uint32_t num_copy = num;
+    while (num_copy) {
+        num_len++; num_copy /= 10;
+    }
+    uint8_t r_num[num_len];
+    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
+
+    for (uint8_t i = 0; i < num_len; i++) {
+        r_num[i] = num % 10;
         num /= 10;
     }
 
-    while (r_num) {
+    for (uint8_t i = num_len; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[(r_num % 10)];
-        r_num /= 10;
+        UDR0 = nums_arr[r_num[i - 1]];
     }
 }
 

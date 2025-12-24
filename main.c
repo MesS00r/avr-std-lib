@@ -9,9 +9,7 @@ int main(void) {
     usart_init(9600);
     twi_init(TWI_400K);
     
-    while (1) {
-        UPRINT8("TWI: %d\n", 9, HEX);
-    }
+    while (1) {}
 
     return 0;
 }
