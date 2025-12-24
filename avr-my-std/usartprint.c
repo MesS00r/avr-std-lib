@@ -74,7 +74,7 @@ void usart_print_bin_8(uint8_t num) {
 
     usart_print_str("0b");
     if (num == 0) {
-        usart_print_str("0b00000000");
+        usart_print_str("00000000");
         return;
     }
 
@@ -95,7 +95,7 @@ void usart_print_hex_8(uint8_t num) {
 
     usart_print_str("0x");
     if (num == 0) {
-        usart_print_str("0x00");
+        usart_print_str("00");
         return;
     }
 
@@ -179,7 +179,7 @@ void usart_print_bin_16(uint16_t num) {
 
     usart_print_str("0b");
     if (num == 0) {
-        usart_print_str("0b00000000 00000000");
+        usart_print_str("00000000 00000000");
         return;
     }
 
@@ -191,7 +191,7 @@ void usart_print_bin_16(uint16_t num) {
     for (uint8_t i = 16; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
         UDR0 = nums_arr[r_num[i - 1]];
-        if (i % 8 == 0 && i != 15) {
+        if (i % 9 == 0) {
             while (!(UCSR0A & (1 << UDRE0)));
             UDR0 = ' ';
         }
@@ -288,19 +288,19 @@ void usart_print_bin_32(uint32_t num) {
 
     usart_print_str("0b");
     if (num == 0) {
-        usart_print_str("0b00000000 00000000 00000000 00000000");
+        usart_print_str("00000000 00000000 00000000 00000000");
         return;
     }
 
-    for (uint8_t i = 0; i < 8; i++) {
+    for (uint8_t i = 0; i < 32; i++) {
         r_num[i] = num % 2;
         num /= 2;
     }
 
-    for (uint8_t i = 8; i > 0; i--) {
+    for (uint8_t i = 32; i > 0; i--) {
         while (!(UCSR0A & (1 << UDRE0)));
         UDR0 = nums_arr[r_num[i - 1]];
-        if (i % 32 == 0 && i != 31) {
+        if (i % 9 == 0) {
             while (!(UCSR0A & (1 << UDRE0)));
             UDR0 = ' ';
         }
@@ -313,7 +313,7 @@ void usart_print_hex_32(uint32_t num) {
 
     usart_print_str("0x");
     if (num == 0) {
-        usart_print_str("0x00000000");
+        usart_print_str("00000000"); 
         return;
     }
 
