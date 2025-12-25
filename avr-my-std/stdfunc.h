@@ -1,7 +1,7 @@
 #ifndef STDFUNC_H_INCLUDED
 #define STDFUNC_H_INCLUDED
 
-//#define DEBUG_MODE 0
+#define DEBUG_MODE 0
 
 #define A0 0
 #define A1 1
@@ -12,8 +12,8 @@
 #define A6 6
 #define A7 7
 
-// #define OC1A 1
-// #define OC1B 2
+#define OC1A 1
+#define OC1B 2
 
 #define DEC 0
 #define BIN 1
@@ -54,8 +54,14 @@ typedef enum {
     SUCCESS = 0x00,
     TIMER1_ERR = 0x10,
     USART_ERR = 0x20,
-    TWI_ERR = 0x30,
-    ADC_ERR = 0x40
+    
+    TWI_START_ERR = 0x30,
+    TWI_WRITE_ERR = 0x31,
+    TWI_WRITE_SCL_ERR = 0x32,
+    TWI_READ_ERR = 0x33,
+    TWI_STOP_ERR = 0x34,
+
+    // ADC_ERR = 0x40
 } r_code;
 
 

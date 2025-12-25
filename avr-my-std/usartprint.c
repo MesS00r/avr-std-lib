@@ -3,19 +3,20 @@
 // ****** USART INIT ******
 
 void usart_init(uint16_t baud) {
-    uint16_t uart_speed = F_CPU / (16UL * baud) - 1;
+    uint16_t uart_speed = (uint16_t)(F_CPU / (16UL * baud) - 1UL);
     UBRR0H = (uint8_t)(uart_speed >> 8);
     UBRR0L = (uint8_t)uart_speed;
 
     UCSR0B = (1 << TXEN0) | (1 << RXEN0);
     UCSR0C = (1 << UCSZ00) | (1 << UCSZ01);
 
-// #if DEBUG_MODE
-//     UPRINT("USART speed: %d\n", uart_speed, DEC);
-//     UPRINT("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2), DEC);
-//     UPRINT("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2), DEC);
-//     UPRINT("UCSR: %d\n", UCSR0C, BIN);
-// #endif
+#if DEBUG_MODE
+    UPRINT16U("Baud: %d\n", baud, DEC);
+    UPRINT16U("USART speed: %d\n", uart_speed, DEC);
+    UPRINT8U("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2), DEC);
+    UPRINT8U("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2), DEC);
+    UPRINT8U("UCSR: %d\n", UCSR0C, BIN);
+#endif
 }
 
 // ****** USART PRINT STR ******
@@ -115,7 +116,7 @@ void usart_print_8(const char* str, int8_t num, uint8_t mode) {
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_dec_8(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -123,7 +124,7 @@ void usart_print_8(const char* str, int8_t num, uint8_t mode) {
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_bin_8(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -131,7 +132,7 @@ void usart_print_8(const char* str, int8_t num, uint8_t mode) {
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_hex_8(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -224,7 +225,7 @@ void usart_print_16(const char* str, int16_t num, uint8_t mode) {
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_dec_16(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -232,7 +233,7 @@ void usart_print_16(const char* str, int16_t num, uint8_t mode) {
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_bin_16(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -240,7 +241,7 @@ void usart_print_16(const char* str, int16_t num, uint8_t mode) {
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_hex_16(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -333,7 +334,7 @@ void usart_print_32(const char* str, int32_t num, uint8_t mode) {
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_dec_32(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -341,7 +342,7 @@ void usart_print_32(const char* str, int32_t num, uint8_t mode) {
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_bin_32(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -349,7 +350,7 @@ void usart_print_32(const char* str, int32_t num, uint8_t mode) {
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_hex_32(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -452,7 +453,7 @@ void usart_print_8u(const char* str, uint8_t num, uint8_t mode) {
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_dec_8u(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -460,7 +461,7 @@ void usart_print_8u(const char* str, uint8_t num, uint8_t mode) {
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_bin_8(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -468,7 +469,7 @@ void usart_print_8u(const char* str, uint8_t num, uint8_t mode) {
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_hex_8(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -482,7 +483,7 @@ void usart_print_16u(const char* str, uint16_t num, uint8_t mode) {
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_dec_16u(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -490,7 +491,7 @@ void usart_print_16u(const char* str, uint16_t num, uint8_t mode) {
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_bin_16(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -498,7 +499,7 @@ void usart_print_16u(const char* str, uint16_t num, uint8_t mode) {
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_hex_16(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -512,7 +513,7 @@ void usart_print_32u(const char* str, uint32_t num, uint8_t mode) {
     switch (mode) {
     case DEC: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_dec_32u(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -520,7 +521,7 @@ void usart_print_32u(const char* str, uint32_t num, uint8_t mode) {
         } break;
     case BIN: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_bin_32(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
@@ -528,7 +529,7 @@ void usart_print_32u(const char* str, uint32_t num, uint8_t mode) {
         } break;
     case HEX: 
         while (*str) {
-            if (*str == '%' && *(str + 1) == 'd' && !is_print) {
+            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
                 is_print = 1; usart_print_hex_32(num);
                 str += 2; continue;
             } else usart_print_ch(*str);
