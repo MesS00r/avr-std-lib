@@ -3,11 +3,14 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stdfunc.h>
+#include <usartprint.h>
+#include <twilib.h>
 
 int main(void) {
     usart_init(9600);
     twi_init(TWI_400K);
+
+    UPRINT("sss: %d, %d, %d\n");
 
     while (1) {}
 

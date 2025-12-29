@@ -1,132 +1,5 @@
 #include "stdfunc.h"
 
-// ***** TWI BASE FUNC *****
-
-void twi_init(uint32_t scl) {
-    TWSR = 0;
-    TWBR = (((F_CPU / scl) - 16UL) / 2UL);
-
-#if DEBUG_MODE
-    UPRINT16U("F_SCL: %dK\n", (uint16_t)(scl / 1000UL), DEC);
-    UPRINT8U("Bit rate: %d\n", TWBR, DEC);
-#endif
-}
-
-r_code twi_start(void) {
-    TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
-    while (!(TWCR & (1 << TWINT)));
-
-    if (!(TWSR & 0xf8)) {
-        return TWI_START_ERR;
-#if DEBUG_MODE
-        UPRINT8U("TWI START ERROR");
-#endif
-    }
-    else {
-        return SUCCESS;
-#if DEBUG_MODE
-        UPRINT8U("SUCCESS");
-#endif
-    }
-}
-
-r_code twi_write(uint8_t data) {
-    TWDR = data;
-    TWCR = (1 << TWINT) | (1 << TWEN);
-    while (!(TWCR & (1 << TWINT)));
-
-    if (!(TWSR & 0xf8)) {
-        return TWI_WRITE_ERR;
-#if DEBUG_MODE
-        UPRINT8U("TWI WRITE ERROR");
-#endif
-    }
-    else {
-        return SUCCESS;
-#if DEBUG_MODE
-        UPRINT8U("SUCCESS");
-#endif
-    }
-}
-
-r_code twi_write_scl(uint8_t scl) {
-    TWDR = scl;
-    TWCR = (1 << TWINT) | (1 << TWEN);
-    while (!(TWCR & (1 << TWINT)));
-
-    if (!(TWSR & 0xf8)) {
-        return TWI_WRITE_SCL_ERR;
-#if DEBUG_MODE
-        UPRINT8U("TWI WRITE SCL ERROR");
-#endif
-    }
-    else {
-        return SUCCESS;
-#if DEBUG_MODE
-        UPRINT8U("SUCCESS");
-#endif
-    }
-}
-
-uint8_t twi_read(uint8_t ack) {
-    TWCR = (1 << TWINT) | (1 << TWEN) | (ack ? (1 << TWEA) : 0);
-    while (!(TWCR & (1 << TWINT)));
-
-    if (!(TWSR & 0xf8)) {
-        return TWI_READ_ERR;
-#if DEBUG_MODE
-        UPRINT8U("TWI STOP ERROR");
-#endif
-    }
-    else {
-        return TWDR;
-#if DEBUG_MODE
-        UPRINT8U("SUCCESS");
-#endif
-    }
-}
-
-r_code twi_stop(void) {
-    TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
-    while (!(TWCR & (1 << TWINT)));
-
-    if (!(TWSR & 0xf8)) {
-        return TWI_STOP_ERR;
-#if DEBUG_MODE
-        UPRINT8U("TWI STOP ERROR");
-#endif
-    }
-    else {
-        return SUCCESS;
-#if DEBUG_MODE
-        UPRINT8U("SUCCESS");
-#endif
-    }
-}
-
-// ***** TWI *****
-
-r_code twi_write_reg(uint8_t addr, uint8_t data) {
-    r_code err_code;
-
-    err_code = twi_start();
-    if (err_code != SUCCESS) return err_code;
-
-    err_code = twi_write_scl(addr);
-    if (err_code != SUCCESS) return err_code;
-
-    err_code = twi_start();
-    if (err_code != SUCCESS) return err_code;
-
-    err_code = twi_write(data);
-    if (err_code != SUCCESS) return err_code;
-
-    return SUCCESS;
-#if DEBUG_MODE
-    UPRINT8("WRITE REG SUCCESS");
-#endif
-}
-
 // ***** ANALOG READ *****
 
 uint16_t adc_read(uint8_t a_pin) {
@@ -154,10 +27,10 @@ void timer1_init(uint8_t port) {
     TCCR1B = (1 << WGM13) | (1 << WGM12) | (1 << CS11);
     ICR1 = 40000;
 
-#if DEBUG_MODE
-    UPRINT8U("OC1A mode: %d\n", ((TCCR1A >> COM1A1) % 2), DEC);
-    UPRINT8U("OC1B mode: %d\n", ((TCCR1A >> COM1B1) % 2), DEC);
-    UPRINT16U("ICR: %d\n", ICR1, DEC);
+#if DEBUG_MODE_OTHER
+    UPRINT("OC1A mode: %d\n", ((TCCR1A >> COM1A1) % 2));
+    UPRINT("OC1B mode: %d\n", ((TCCR1A >> COM1B1) % 2));
+    UPRINT("ICR: %d\n", ICR1);
 #endif
 }
 

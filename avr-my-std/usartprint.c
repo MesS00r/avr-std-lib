@@ -1,8 +1,8 @@
-#include "stdfunc.h"
+#include "usartprint.h"
 
 // ****** USART INIT ******
 
-void usart_init(uint16_t baud) {
+void usart_init(const uint16_t baud) {
     uint16_t uart_speed = (uint16_t)(F_CPU / (16UL * baud) - 1UL);
     UBRR0H = (uint8_t)(uart_speed >> 8);
     UBRR0L = (uint8_t)uart_speed;
@@ -10,18 +10,18 @@ void usart_init(uint16_t baud) {
     UCSR0B = (1 << TXEN0) | (1 << RXEN0);
     UCSR0C = (1 << UCSZ00) | (1 << UCSZ01);
 
-#if DEBUG_MODE
-    UPRINT16U("Baud: %d\n", baud, DEC);
-    UPRINT16U("USART speed: %d\n", uart_speed, DEC);
-    UPRINT8U("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2), DEC);
-    UPRINT8U("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2), DEC);
-    UPRINT8U("UCSR: %d\n", UCSR0C, BIN);
+#if DEBUG_MODE_USART
+    UPRINT("Baud: %d\n", baud);
+    UPRINT("USART speed: %d\n", uart_speed);
+    UPRINT("RX mode: %d\n", ((UCSR0B >> RXEN0) % 2));
+    UPRINT("TX mode: %d\n", ((UCSR0B >> TXEN0) % 2));
+    UPRINT("UCSR: %b\n", UCSR0C);
 #endif
 }
 
 // ****** USART PRINT STR ******
 
-void usart_print_ch(char ch) {
+static inline void usart_print_ch(const char ch) {
     if (ch == '\n') {
         while (!(UCSR0A & (1 << UDRE0)));
         UDR0 = '\r';
@@ -30,510 +30,70 @@ void usart_print_ch(char ch) {
     UDR0 =  ch;
 }
 
-void usart_print_str(const char* str) {
-    while (*str) {
-        usart_print_ch(*str);
-        str++;
+static inline void usart_print_str(const char *str) {
+    while (*str) usart_print_ch(*str++);
+}
+
+// ****** USART PRINT DEC ******
+
+static inline void usart_print_dec(const uint16_t num) {
+    for (uint8_t deg = 4; deg > 0; deg--) {
+        if (divu10d(num, deg - 1) == 0) continue;
+        else usart_print_ch(('0' + remu10(divu10d(num, deg - 1))));
     }
 }
 
-// ****** USART PRINT 8 ******
+// ****** USART PRINT BIN ******
 
-void usart_print_dec_8(int8_t num) {
-    const char nums_arr[] = "0123456789";
-    uint8_t num_len = 0;
-
-    if (num < 0) {
-        usart_print_ch('-');
-        num = ~num + 1;
-    } else if (num == 0) {
-        usart_print_ch('0');
-        return;
-    }
-
-    uint8_t num_copy = num;
-    while (num_copy) {
-        num_len++; num_copy /= 10;
-    }
-    uint8_t r_num[num_len];
-    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
-
-    for (uint8_t i = 0; i < num_len; i++) {
-        r_num[i] = num % 10;
-        num /= 10;
-    }
-
-    for (uint8_t i = num_len; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_bin_8(uint8_t num) {
-    const char nums_arr[] = "01";
-    uint8_t r_num[8] = {0,0,0,0,0,0,0,0};
+static inline void usart_print_bin(const uint16_t num) {
+    uint8_t deg = num > 0xff ? 16 : 8;
 
     usart_print_str("0b");
-    if (num == 0) {
-        usart_print_str("00000000");
-        return;
-    }
-
-    for (uint8_t i = 0; i < 8; i++) {
-        r_num[i] = num % 2;
-        num /= 2;
-    }
-
-    for (uint8_t i = 8; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
+    for (; deg > 0; deg--) {
+        usart_print_ch(('0' + remu2(divu2d(num, deg - 1))));
+        if (deg == 9) usart_print_ch(' ');
     }
 }
+// ****** USART PRINT HEX ******
 
-void usart_print_hex_8(uint8_t num) {
-    const char nums_arr[] = "0123456789ABCDEF";
-    uint8_t r_num[2] = {0,0};
+static inline uint16_t hex_mask(const uint8_t num) {
+    return num > 9 ? ('A' + (num - 10)) : ('0' + num);
+}
+
+static inline void usart_print_hex(const uint16_t num) {
+    uint8_t deg = num > 0xff ? 4 : 2;
 
     usart_print_str("0x");
-    if (num == 0) {
-        usart_print_str("00");
-        return;
-    }
-
-    for (uint8_t i = 0; i < 2; i++) {
-        r_num[i] = num % 16;
-        num /= 16;
-    }
-
-    for (uint8_t i = 2; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
+    for (; deg > 0; deg--) {
+        usart_print_ch(hex_mask(remu16(divu16d(num, deg - 1))));
     }
 }
 
-void usart_print_8(const char* str, int8_t num, uint8_t mode) {
-    uint8_t is_print = 0;
-    switch (mode) {
-    case DEC: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_dec_8(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case BIN: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_bin_8(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case HEX: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_hex_8(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    }
-}
+// ****** USART PRINT ******
 
-// ****** USART PRINT 16 ******
-
-void usart_print_dec_16(int16_t num) {
-    const char nums_arr[] = "0123456789";
-    uint8_t num_len = 0;
-
-    if (num < 0) {
-        usart_print_ch('-');
-        num = ~num + 1;
-    } else if (num == 0) {
-        usart_print_ch('0');
-        return;
-    }
-
-    uint16_t num_copy = num;
-    while (num_copy) {
-        num_len++; num_copy /= 10;
-    }
-    uint8_t r_num[num_len];
-    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
-
-    for (uint8_t i = 0; i < num_len; i++) {
-        r_num[i] = num % 10;
-        num /= 10;
-    }
-
-    for (uint8_t i = num_len; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_bin_16(uint16_t num) {
-    const char nums_arr[] = "01";
-    uint8_t r_num[16];
-    for (uint8_t i = 0; i < 16; i++) r_num[i] = 0;
-
-    usart_print_str("0b");
-    if (num == 0) {
-        usart_print_str("00000000 00000000");
-        return;
-    }
-
-    for (uint8_t i = 0; i < 16; i++) {
-        r_num[i] = num % 2;
-        num /= 2;
-    }
-
-    for (uint8_t i = 16; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-        if (i % 9 == 0) {
-            while (!(UCSR0A & (1 << UDRE0)));
-            UDR0 = ' ';
+void uprint(const char *fmt, const uint8_t len, const uint16_t *args) {
+    uint8_t index = 0;
+    while (*fmt) {
+        if (*fmt == '%' && index != len) {
+            switch (*(fmt + 1)) {
+            case 'D':
+            case 'd':
+                usart_print_dec(args[index]);
+                break;
+            case 'b':
+            case 'B':
+                usart_print_bin(args[index]);
+                break;
+            case 'x':
+            case 'X':
+                usart_print_hex(args[index]);
+                break;
+            }
+            fmt += 2;
+            index++;
+        } else {
+            usart_print_ch(*fmt);
+            fmt++;
         }
-    }
-}
-
-void usart_print_hex_16(uint16_t num) {
-    const char nums_arr[] = "0123456789ABCDEF";
-    uint8_t r_num[4] = {0,0,0,0};
-
-    usart_print_str("0x");
-    if (num == 0) {
-        usart_print_str("0x0000");
-        return;
-    }
-
-    for (uint8_t i = 0; i < 4; i++) {
-        r_num[i] = num % 16;
-        num /= 16;
-    }
-
-    for (uint8_t i = 4; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_16(const char* str, int16_t num, uint8_t mode) {
-    uint8_t is_print = 0;
-    switch (mode) {
-    case DEC: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_dec_16(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case BIN: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_bin_16(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case HEX: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_hex_16(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    }
-}
-
-// ****** USART PRINT 32 ******
-
-void usart_print_dec_32(int32_t num) {
-    const char nums_arr[] = "0123456789";
-    uint8_t num_len = 0;
-
-    if (num < 0) {
-        usart_print_ch('-');
-        num = ~num + 1;
-    } else if (num == 0) {
-        usart_print_ch('0');
-        return;
-    }
-
-    uint32_t num_copy = num;
-    while (num_copy) {
-        num_len++; num_copy /= 10;
-    }
-    uint8_t r_num[num_len];
-    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
-
-    for (uint8_t i = 0; i < num_len; i++) {
-        r_num[i] = num % 10;
-        num /= 10;
-    }
-
-    for (uint8_t i = num_len; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_bin_32(uint32_t num) {
-    const char nums_arr[] = "01";
-    uint8_t r_num[32];
-    for (uint8_t i = 0; i < 32; i++) r_num[i] = 0;
-
-    usart_print_str("0b");
-    if (num == 0) {
-        usart_print_str("00000000 00000000 00000000 00000000");
-        return;
-    }
-
-    for (uint8_t i = 0; i < 32; i++) {
-        r_num[i] = num % 2;
-        num /= 2;
-    }
-
-    for (uint8_t i = 32; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-        if (i % 9 == 0) {
-            while (!(UCSR0A & (1 << UDRE0)));
-            UDR0 = ' ';
-        }
-    }
-}
-
-void usart_print_hex_32(uint32_t num) {
-    const char nums_arr[] = "0123456789ABCDEF";
-    uint8_t r_num[8] = {0,0,0,0,0,0,0,0};
-
-    usart_print_str("0x");
-    if (num == 0) {
-        usart_print_str("00000000"); 
-        return;
-    }
-
-    for (uint8_t i = 0; i < 8; i++) {
-        r_num[i] = num % 16;
-        num /= 16;
-    }
-
-    for (uint8_t i = 8; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_32(const char* str, int32_t num, uint8_t mode) {
-    uint8_t is_print = 0;
-    switch (mode) {
-    case DEC: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_dec_32(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case BIN: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_bin_32(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case HEX: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_hex_32(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    }
-}
-
-// ****** USART PRINT UNSIGNED ******
-
-void usart_print_dec_8u(uint8_t num) {
-    const char nums_arr[] = "0123456789";
-    uint8_t num_len = 0;
-
-    if (num < 0) {
-        usart_print_ch('-');
-        num = ~num + 1;
-    } else if (num == 0) {
-        usart_print_ch('0');
-        return;
-    }
-
-    uint8_t num_copy = num;
-    while (num_copy) {
-        num_len++; num_copy /= 10;
-    }
-    uint8_t r_num[num_len];
-    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
-
-    for (uint8_t i = 0; i < num_len; i++) {
-        r_num[i] = num % 10;
-        num /= 10;
-    }
-
-    for (uint8_t i = num_len; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_dec_16u(uint16_t num) {
-    const char nums_arr[] = "0123456789";
-    uint8_t num_len = 0;
-
-    if (num < 0) {
-        usart_print_ch('-');
-        num = ~num + 1;
-    } else if (num == 0) {
-        usart_print_ch('0');
-        return;
-    }
-
-    uint16_t num_copy = num;
-    while (num_copy) {
-        num_len++; num_copy /= 10;
-    }
-    uint8_t r_num[num_len];
-    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
-
-    for (uint8_t i = 0; i < num_len; i++) {
-        r_num[i] = num % 10;
-        num /= 10;
-    }
-
-    for (uint8_t i = num_len; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_dec_32u(uint32_t num) {
-    const char nums_arr[] = "0123456789";
-    uint8_t num_len = 0;
-
-    if (num == 0) {
-        usart_print_ch('0');
-        return;
-    }
-
-    uint32_t num_copy = num;
-    while (num_copy) {
-        num_len++; num_copy /= 10;
-    }
-    uint8_t r_num[num_len];
-    for (uint8_t i = 0; i < num_len; i++) r_num[i] = 0;
-
-    for (uint8_t i = 0; i < num_len; i++) {
-        r_num[i] = num % 10;
-        num /= 10;
-    }
-
-    for (uint8_t i = num_len; i > 0; i--) {
-        while (!(UCSR0A & (1 << UDRE0)));
-        UDR0 = nums_arr[r_num[i - 1]];
-    }
-}
-
-void usart_print_8u(const char* str, uint8_t num, uint8_t mode) {
-    uint8_t is_print = 0;
-    switch (mode) {
-    case DEC: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_dec_8u(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case BIN: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_bin_8(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case HEX: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_hex_8(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    }
-}
-
-void usart_print_16u(const char* str, uint16_t num, uint8_t mode) {
-    uint8_t is_print = 0;
-    switch (mode) {
-    case DEC: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_dec_16u(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case BIN: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_bin_16(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case HEX: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_hex_16(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    }
-}
-
-void usart_print_32u(const char* str, uint32_t num, uint8_t mode) {
-    uint8_t is_print = 0;
-    switch (mode) {
-    case DEC: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_dec_32u(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case BIN: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_bin_32(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
-    case HEX: 
-        while (*str) {
-            if (*str == '%' && (*(str + 1) == 'd' || *(str + 1) == 'D') && !is_print) {
-                is_print = 1; usart_print_hex_32(num);
-                str += 2; continue;
-            } else usart_print_ch(*str);
-            str++;
-        } break;
     }
 }
