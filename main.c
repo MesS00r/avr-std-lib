@@ -10,7 +10,8 @@ int main(void) {
     usart_init(9600);
     twi_init(TWI_400K);
 
-    UPRINT("sss: %d, %d, %d\n");
+    UPRINT0("Hello world!!!\n");
+    UPRINT("NUMS: %d, %B, %x\n", 400, 23, 8932);
 
     while (1) {}
 

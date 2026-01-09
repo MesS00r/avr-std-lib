@@ -1,7 +1,7 @@
 #ifndef TWILIB_H_INCLUDED
 #define TWILIB_H_INCLUDED
 
-#define DEBUG_MODE_TWI 0
+#define DEBUG_MODE_TWI 1
 
 #define TWI_100K 100000UL
 #define TWI_250K 250000UL

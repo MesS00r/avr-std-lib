@@ -21,13 +21,13 @@ twi_code twi_start(void) {
         (TWSR & 0xf8) != TW_REP_START) {
         return TWI_START_ERR;
 #if DEBUG_MODE_TWI
-        UPRINT("TWI START ERROR\n");
+        UPRINT0("TWI START ERROR\n");
 #endif
     }
     else {
         return TWI_SUCCESS;
 #if DEBUG_MODE_TWI
-        UPRINT("SUCCESS\n");
+        UPRINT0("SUCCESS\n");
 #endif
     }
 }
@@ -41,13 +41,13 @@ twi_code twi_write(uint8_t data) {
         (TWSR & 0xf8) != TW_MR_DATA_NACK) {
         return TWI_WRITE_ERR;
 #if DEBUG_MODE_TWI
-        UPRINT("TWI WRITE ERROR\n");
+        UPRINT0("TWI WRITE ERROR\n");
 #endif
     }
     else {
         return TWI_SUCCESS;
 #if DEBUG_MODE_TWI
-        UPRINT("SUCCESS\n");
+        UPRINT0("SUCCESS\n");
 #endif
     }
 }
@@ -61,13 +61,13 @@ twi_code twi_write_scl(uint8_t scl) {
         (TWSR & 0xf8) != TW_MT_SLA_NACK) {
         return TWI_WRITE_SCL_ERR;
 #if DEBUG_MODE_TWI
-        UPRINT("TWI WRITE SCL ERROR\n");
+        UPRINT0("TWI WRITE SCL ERROR\n");
 #endif
     }
     else {
         return TWI_SUCCESS;
 #if DEBUG_MODE_TWI
-        UPRINT("SUCCESS\n");
+        UPRINT0("SUCCESS\n");
 #endif
     }
 }
@@ -79,20 +79,20 @@ twi_code twi_read(uint8_t* data, bool ack) {
     if (ack && TW_STATUS != TW_MR_DATA_ACK) {
         return TWI_READ_ACK_ERR;
 #if DEBUG_MODE_TWI
-        UPRINT("TWI READ ACK ERROR\n");
+        UPRINT0("TWI READ ACK ERROR\n");
 #endif
     }
     else if (!ack && TW_STATUS != TW_MR_DATA_NACK) {
         return TWI_READ_NACK_ERR;
 #if DEBUG_MODE_TWI
-        UPRINT("TWI READ NACK ERROR\n");
+        UPRINT0("TWI READ NACK ERROR\n");
 #endif
     }
     else {
         *data = TWDR;
         return TWI_SUCCESS;
 #if DEBUG_MODE_TWI
-        UPRINT("SUCCESS\n");
+        UPRINT0("SUCCESS\n");
 #endif
     }
 }
@@ -102,7 +102,7 @@ void twi_stop(void) {
     while (!(TWCR & (1 << TWSTO)));
 
 #if DEBUG_MODE_TWI
-    UPRINT("SUCCESS\n");
+    UPRINT0("SUCCESS\n");
 #endif
 }
 
@@ -127,7 +127,7 @@ twi_code twi_write_reg(uint8_t addr, uint8_t reg, uint8_t data) {
 
     return TWI_SUCCESS;
 #if DEBUG_MODE_TWI
-    UPRINT("WRITE REG SUCCESS\n");
+    UPRINT0("WRITE REG SUCCESS\n");
 #endif
 }
 
@@ -158,6 +158,6 @@ twi_code twi_read_reg(uint8_t addr, uint8_t reg, uint8_t* data, uint8_t len) {
 
     return TWI_SUCCESS;
 #if DEBUG_MODE_TWI
-    UPRINT("READ REG SUCCESS\n");
+    UPRINT0("READ REG SUCCESS\n");
 #endif
 }
