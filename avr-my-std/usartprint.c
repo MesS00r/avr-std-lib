@@ -31,15 +31,22 @@ static inline void usart_print_ch(const char ch) {
 }
 
 static inline void usart_print_str(const char *str) {
-    while (*str) usart_print_ch(*str++);
+    char ch = 0;
+    while ((ch = pgm_read_byte(str))) {
+        usart_print_ch(ch);
+        str++;
+    }
 }
 
 // ****** USART PRINT DEC ******
 
 static inline void usart_print_dec(const uint16_t num) {
     for (uint8_t deg = 4; deg > 0; deg--) {
-        if (divu10d(num, deg - 1) == 0) continue;
-        else usart_print_ch(('0' + remu10(divu10d(num, deg - 1))));
+        uint16_t divnum = divu10d(num, deg - 1);
+        uint16_t rem = remu10(divnum);
+
+        if (divnum == 0) continue;
+        else usart_print_ch(('0' + rem));
     }
 }
 
@@ -48,9 +55,12 @@ static inline void usart_print_dec(const uint16_t num) {
 static inline void usart_print_bin(const uint16_t num) {
     uint8_t deg = num > 0xff ? 16 : 8;
 
-    usart_print_str("0b");
+    usart_print_str(PSTR("0b"));
     for (; deg > 0; deg--) {
-        usart_print_ch(('0' + remu2(divu2d(num, deg - 1))));
+        uint16_t divnum = divu2d(num, deg - 1);
+        uint16_t rem = remu2(divnum);
+
+        usart_print_ch(('0' + rem));
         if (deg == 9) usart_print_ch(' ');
     }
 }
@@ -63,9 +73,13 @@ static inline uint16_t hex_mask(const uint8_t num) {
 static inline void usart_print_hex(const uint16_t num) {
     uint8_t deg = num > 0xff ? 4 : 2;
 
-    usart_print_str("0x");
+    usart_print_str(PSTR("0x"));
     for (; deg > 0; deg--) {
-        usart_print_ch(hex_mask(remu16(divu16d(num, deg - 1))));
+        uint16_t divnum = divu16d(num, deg - 1);
+        uint16_t rem = remu16(divnum);
+        char hex_num = hex_mask(rem);
+
+        usart_print_ch(hex_num);
     }
 }
 
@@ -73,9 +87,16 @@ static inline void usart_print_hex(const uint16_t num) {
 
 void uprint(const char *fmt, const uint8_t len, const uint16_t *args) {
     uint8_t index = 0;
-    while (*fmt) {
-        if (*fmt == '%' && index != len) {
-            switch (*(fmt + 1)) {
+    char ch0 = 0, ch1 = 0;
+
+    while ((ch0 = pgm_read_byte(fmt))) {
+        fmt++;
+
+        if (ch0 == '%' && index < len) {
+            ch1 = pgm_read_byte(fmt);
+            fmt++;
+
+            switch (ch1) {
             case 'D':
             case 'd':
                 usart_print_dec(args[index]);
@@ -88,12 +109,15 @@ void uprint(const char *fmt, const uint8_t len, const uint16_t *args) {
             case 'X':
                 usart_print_hex(args[index]);
                 break;
+            default:
+                usart_print_ch('%');
+                usart_print_ch(ch1);
+                break;
             }
-            fmt += 2;
+
             index++;
         } else {
-            usart_print_ch(*fmt);
-            fmt++;
+            usart_print_ch(ch0);
         }
     }
 }

@@ -5,6 +5,7 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/pgmspace.h>
 #include <stdbool.h>
 #include "bitmath.h"
 
@@ -17,8 +18,8 @@ void uprint(const char *fmt, const uint8_t len, const uint16_t *args);
 #define UPRINT(fmt, ...) \
     _Static_assert(sizeof((uint16_t[]){__VA_ARGS__}) > 0, \
         "UPRINT requires at least one argument."); \
-    uprint((fmt), ARGS_COUNT(__VA_ARGS__), (uint16_t[]){__VA_ARGS__})
+    uprint(PSTR(fmt), ARGS_COUNT(__VA_ARGS__), (uint16_t[]){__VA_ARGS__})
 
-#define UPRINT0(fmt) uprint(fmt, 0, (void*)0)
+#define UPRINT0(fmt) uprint(PSTR(fmt), 0, (void*)0)
 
 #endif //USARTPRINT_H_INCLUDED
